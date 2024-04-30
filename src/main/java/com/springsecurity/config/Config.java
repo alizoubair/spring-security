@@ -2,6 +2,7 @@ package com.springsecurity.config;
 
 import com.springsecurity.filters.AuthenticationLoggingFilter;
 import com.springsecurity.filters.RequestValidationFilter;
+import com.springsecurity.filters.StaticKeyAuthenticationFilter;
 import com.springsecurity.security.CustomAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,23 +21,19 @@ import javax.sql.DataSource;
 public class Config {
 
     private final CustomAuthenticationProvider authenticationProvider;
+    private final StaticKeyAuthenticationFilter filter;
 
-    public Config(CustomAuthenticationProvider customAuthenticationProvider) {
+    public Config(CustomAuthenticationProvider customAuthenticationProvider, StaticKeyAuthenticationFilter filter) {
         this.authenticationProvider = customAuthenticationProvider;
+        this.filter = filter;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.addFilterBefore(
-                        new RequestValidationFilter(),
+        httpSecurity.addFilterAt(
+                        filter,
                         BasicAuthenticationFilter.class)
-                    .addFilterAfter(
-                            new AuthenticationLoggingFilter(),
-                            BasicAuthenticationFilter.class
-                    )
-                    .authorizeRequests()
-                            .anyRequest()
-                                    .permitAll();
+                    .authorizeHttpRequests(c -> c.anyRequest().permitAll());
 
         return httpSecurity.build();
     }
